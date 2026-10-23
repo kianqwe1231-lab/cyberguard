@@ -18,6 +18,9 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -40,6 +43,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,14 +56,16 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
-private val Neon = Color(0xFF00FF41)
-private val Red = Color(0xFFFF003C)
-private val Amber = Color(0xFFFFD000)
-private val Cyan = Color(0xFF00E5FF)
-private val Dimmed = Color(0xFF3FA062)
-private val Soft = Color(0xFFB8FFC8)
-private val PanelBg = Color(0xFF020A05)
-private val Glass = Color(0xE6020A05)
+private val Neon = Color(0xFF39FF88)
+private val Red = Color(0xFFFF3158)
+private val Amber = Color(0xFFFFC857)
+private val Cyan = Color(0xFF28E7FF)
+private val Violet = Color(0xFF9B7BFF)
+private val Dimmed = Color(0xFF6C9C86)
+private val Soft = Color(0xFFD2FFE0)
+private val PanelBg = Color(0xFF07110F)
+private val Glass = Color(0xF2091512)
+private val Deep = Color(0xFF020807)
 private val Mono = FontFamily.Monospace
 
 class MainActivity : ComponentActivity() {
@@ -80,11 +86,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(
                 colorScheme = darkColorScheme(
-                    primary = Neon, onPrimary = Color.Black, background = Color.Black,
-                    surface = PanelBg, onBackground = Neon, onSurface = Neon
+                    primary = Neon, onPrimary = Color.Black, secondary = Cyan, onSecondary = Color.Black,
+                    tertiary = Violet, background = Deep, surface = PanelBg, onBackground = Soft, onSurface = Soft,
+                    error = Red, onError = Color.Black
+                ),
+                shapes = Shapes(
+                    extraSmall = RoundedCornerShape(8.dp), small = RoundedCornerShape(12.dp),
+                    medium = RoundedCornerShape(18.dp), large = RoundedCornerShape(24.dp),
+                    extraLarge = RoundedCornerShape(28.dp)
                 )
             ) {
-                Surface(color = Color.Black, modifier = Modifier.fillMaxSize()) { Screen() }
+                Surface(color = Deep, modifier = Modifier.fillMaxSize()) { Screen() }
             }
         }
     }
@@ -147,12 +159,27 @@ private fun advice(f: Finding): String = when {
 
 @Composable
 private fun Panel(border: Color = Neon, content: @Composable ColumnScope.() -> Unit) {
-    OutlinedCard(
-        border = BorderStroke(1.dp, border),
-        colors = CardDefaults.outlinedCardColors(containerColor = Glass),
-        modifier = Modifier.fillMaxWidth()
+    val shape = RoundedCornerShape(18.dp)
+    Box(
+        Modifier.fillMaxWidth()
+            .clip(shape)
+            .background(Brush.verticalGradient(listOf(Color(0xF20C1C17), Color(0xF2050D0B))))
+            .border(Brush.horizontalGradient(listOf(border.copy(alpha = .95f), border.copy(alpha = .28f), Cyan.copy(alpha = .55f))), shape)
     ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp), content = content)
+        Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(7.dp), content = content)
+    }
+}
+
+@Composable
+private fun StatusPill(label: String, color: Color, dot: Boolean = true) {
+    Row(
+        modifier = Modifier.clip(RoundedCornerShape(50)).background(color.copy(alpha = .10f))
+            .border(1.dp, color.copy(alpha = .42f), RoundedCornerShape(50)).padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (dot) Box(Modifier.size(6.dp).clip(RoundedCornerShape(50)).background(color))
+        Text(label, color = color, fontFamily = Mono, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
     }
 }
 
@@ -184,11 +211,11 @@ private fun GlitchTitle(text: String) {
     val v by t.animateFloat(0f, 1f, infiniteRepeatable(tween(2600, easing = LinearEasing)), label = "v")
     val d = if (v > 0.9f) 4.dp else 1.dp
     Box {
-        Text(text, color = Red.copy(alpha = .8f), fontFamily = Mono, fontSize = 24.sp,
-            fontWeight = FontWeight.Bold, modifier = Modifier.offset(x = -d))
-        Text(text, color = Cyan.copy(alpha = .8f), fontFamily = Mono, fontSize = 24.sp,
-            fontWeight = FontWeight.Bold, modifier = Modifier.offset(x = d))
-        Glow(text, Neon, 24)
+        Text(text, color = Red.copy(alpha = .8f), fontFamily = Mono, fontSize = 25.sp,
+            fontWeight = FontWeight.Black, modifier = Modifier.offset(x = -d))
+        Text(text, color = Cyan.copy(alpha = .8f), fontFamily = Mono, fontSize = 25.sp,
+            fontWeight = FontWeight.Black, modifier = Modifier.offset(x = d))
+        Glow(text, Neon, 25)
     }
 }
 
@@ -285,7 +312,11 @@ private fun Screen() {
         Scaffold(
             containerColor = Color.Transparent,
             bottomBar = {
-                NavigationBar(containerColor = PanelBg) {
+                NavigationBar(
+                    containerColor = Color(0xF507100D),
+                    tonalElevation = 0.dp,
+                    modifier = Modifier.border(BorderStroke(1.dp, Neon.copy(alpha = .22f)))
+                ) {
                     listOf("اسکن" to ">_", "ابزارها" to "{ }", "قرنطینه" to "[#]", "وضعیت" to "%")
                         .forEachIndexed { i, (label, glyph) ->
                             NavigationBarItem(
@@ -396,6 +427,18 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         GlitchTitle("[ CYBERGUARD ]")
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            StatusPill(if (st.scanning) "SCANNING" else "SYSTEM READY", if (st.scanning) Cyan else Neon)
+            StatusPill("LOCAL ENGINE", Violet, dot = false)
+        }
+        Box(
+            Modifier.fillMaxWidth().height(1.dp)
+                .background(Brush.horizontalGradient(listOf(Color.Transparent, Neon.copy(alpha = .7f), Cyan.copy(alpha = .65f), Color.Transparent)))
+        )
         Radar(st.scanning, label, radarColor)
         Text(
             if (st.scanning) st.current else "NO MERCY FOR MALWARE",
