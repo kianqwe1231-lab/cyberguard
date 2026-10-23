@@ -5,12 +5,16 @@
     <!-- لیست برنامه‌های نصب‌شده (Android 11+). گوگل‌پلی برای این مجوز فرم توجیهی می‌خواهد؛ آنتی‌ویروس مورد مجاز است. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- برای حذف برنامه‌های آلوده با دیالوگ تأیید سیستم -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <!-- مصرف/زمان استفاده برنامه‌ها؛ کاربر باید دستی از Settings → Usage access بدهد -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
 
     <application
         android:name=".CyberApp"
         android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="CyberGuard"
         android:theme="@style/Theme.CyberGuard">
         <activity android:name=".MainActivity" android:exported="true">

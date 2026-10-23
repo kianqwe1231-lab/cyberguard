@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 class ScanWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
     override suspend fun doWork(): Result {
         val c = applicationContext
-        Scanner.scanAll(c, heavy = false).forEach {
+        Scanner.scanAll(c, heavy = false).findings.forEach {
             val title = if (it.level == Level.THREAT) "تهدید: ${it.label}" else "مشکوک: ${it.label}"
             Notifier.alert(c, it.pkg.hashCode(), title, it.reasons.joinToString(" · "))
         }
