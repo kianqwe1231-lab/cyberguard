@@ -1,26 +1,39 @@
-# CyberGuard Android (v0.3)
+# CyberGuard Android (v0.4)
 
-آنتی‌ویروس اندرویدی با تم هکری — Kotlin + Jetpack Compose. **فقط دستی** است؛ هیچ اسکن خودکار/پس‌زمینه‌ای ندارد.
+CyberGuard is an on-device Android security helper built with Kotlin and Jetpack Compose.
 
-## بیلد
-پوشه را در GitHub بگذار؛ Actions فایل `app-debug.apk` را می‌سازد (Artifacts ← CyberGuard-debug-apk).
+## Build APK
 
-## اسکن سبک
-فقط برنامه‌های نصب‌شده:
-- امضای ویروس شناخته‌شده → ویروس
-- برنامه‌ی پلی‌استور/سیستمی → فقط با امضا؛ **مجوز تنها هرگز هشدار نمی‌دهد** (تلگرام و واتس‌اپ سالم‌اند)
-- برنامه‌ی نصب‌شده از منبع ناشناس → امتیاز رفتاری (مجوزها با سقف ۵، دسترسی‌پذیری، مدیر دستگاه، خواندن اعلان، پنهان بودن)؛ ≥۸ مشکوک، ≥۱۴ ویروس
+Push this repository to GitHub, then open **Actions → Build APK**. Download the
+`CyberGuard-debug-apk` artifact after the workflow succeeds. This is a debug-signed
+APK for testing, not a Play Store release build.
 
-## اسکن سنگین
-همه‌ی بالا + هش APKها + گشتن کل حافظه‌ی داخلی (نیاز به «دسترسی به همه‌ی فایل‌ها»):
-EICAR/امضا، پسوند دوگانه (`photo.jpg.apk`)، فایل اجرایی با پسوند جعلی، فایل اجرایی ویندوز، APK نصب‌نشده با مجوز پرخطر.
-هر مورد: حذف / قرنطینه / نادیده. دکمه‌ی «حذف همه‌ی ویروس‌ها».
+## Features
 
-## ابزارها
-بررسی لینک · اسکن یک فایل · امنیت Wi-Fi · ممیزی حریم خصوصی · قرنطینه (بازگردانی/حذف دائمی) · تاریخچه
+- Scan installed applications using package identity, installer source, selected risky
+  permissions, enabled accessibility services, active device-admin packages and
+  notification-listener packages.
+- Optional heavy scan of shared storage (requires Android's special all-files access).
+- APK and file checks using SHA-256, known hash entries, EICAR test detection,
+  file-signature checks and suspicious double extensions.
+- Quarantine files into app-private storage with copy verification, restore without
+  overwriting an existing file, and permanent deletion with result checks.
+- Scan history, URL checks, Wi-Fi checks and privacy/usage audit tools.
+- Periodic lightweight package scan through WorkManager and package-install scan
+  notifications. Android controls background timing; periodic work is not exact.
+- Dark, neon-green Jetpack Compose interface.
 
-## محدودیت‌ها
-- پایگاه امضا خالی است (`Signatures` در Scanner.kt) → فید واقعی لازم است
-- Android/data و Android/obb را اندروید قفل کرده
-- حذف برنامه همیشه دیالوگ تأیید سیستم دارد
-- درصد باتری هر برنامه در اندروید در دسترس نیست (زمان پیش‌زمینه استفاده می‌شود)
+## Important limitations
+
+- The built-in signature lists are empty by default. A genuine up-to-date malware
+  signature feed or reputable reputation service must be configured separately.
+- Heuristic findings can be false positives or miss malware. A clean result does not
+  prove a file or app is safe.
+- Android restricts access to some folders, particularly `Android/data` and `Android/obb`.
+- Android requires system confirmation to uninstall another app. CyberGuard does not
+  silently uninstall apps.
+- Notifications require user permission on Android 13+.
+- Battery percentage per app is not available through the normal public API; usage
+  time is only an indirect signal.
+- This project is not a replacement for Google Play Protect or a professional endpoint
+  security product.

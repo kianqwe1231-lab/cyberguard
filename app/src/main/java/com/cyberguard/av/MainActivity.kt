@@ -63,8 +63,20 @@ private val Glass = Color(0xE6020A05)
 private val Mono = FontFamily.Monospace
 
 class MainActivity : ComponentActivity() {
+    private val notificationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* Notification permission is optional; scans still work without it. */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val prefs = getSharedPreferences("cyberguard", MODE_PRIVATE)
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
+            !prefs.getBoolean("notification_prompted", false)
+        ) {
+            prefs.edit().putBoolean("notification_prompted", true).apply()
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
         setContent {
             MaterialTheme(
                 colorScheme = darkColorScheme(
@@ -773,8 +785,8 @@ private fun StatusTab() {
 
         Panel {
             Title("حالت کار")
-            Body("✔ فقط دستی: هیچ اسکن خودکار یا پس‌زمینه‌ای اجرا نمی‌شود.")
-            Body("✔ هیچ داده‌ای از گوشی خارج نمی‌شود (همه‌چیز روی خود دستگاه).")
+            Body("✔ اسکن دستی + بررسی سبک پس‌زمینه (WorkManager؛ با محدودیت‌های اندروید).")
+            Body("✔ تحلیل‌ها روی دستگاه انجام می‌شوند؛ برنامه داده‌ای برای سرور ارسال نمی‌کند.")
             Body(if (FileSweep.hasAccess(ctx)) "✔ دسترسی به فایل‌ها داده شده (اسکن سنگین آماده است)" else "✖ دسترسی به فایل‌ها داده نشده (برای اسکن سنگین لازم است)", if (FileSweep.hasAccess(ctx)) Soft else Amber)
             Body(if (usage) "✔ پایش مصرف برنامه‌ها فعال است" else "✖ پایش مصرف: دسترسی نداده‌ای", if (usage) Soft else Amber)
             if (!usage) OutlinedButton(onClick = { UsageMonitor.openSettings(ctx) }) { Text("فعال‌سازی Usage access") }
