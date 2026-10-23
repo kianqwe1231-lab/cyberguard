@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -21,15 +21,23 @@ jobs:
           set +e
           gradle assembleDebug --no-daemon --console=plain > build.log 2>&1
           code=$?
-          {
-            echo "## Build result (exit code $code)"
-            echo '```'
-            grep -E "^e: |What went wrong|error:" -A4 build.log | head -60
-            echo '--- last lines ---'
-            tail -25 build.log
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          if [ $code -ne 0 ]; then
+            grep -E "^e: " build.log | head -10 | while IFS= read -r line; do
+              line="${line//%/%25}"
+              echo "::error title=Kotlin error::$line"
+            done
+            grep -E "What went wrong" -A5 build.log | head -10 | while IFS= read -r line; do
+              line="${line//%/%25}"
+              echo "::error title=Gradle::$line"
+            done
+          fi
           exit $code
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
       - uses: actions/upload-artifact@v4
         with:
           name: CyberGuard-debug-apk

@@ -38,7 +38,7 @@ object Signatures {
     val packages: MutableMap<String, String> = mutableMapOf() // packageName -> family
 }
 
-private class Env(val a11y: Set<String>, val admins: Set<String>, val listeners: Set<String>)
+internal class Env(val a11y: Set<String>, val admins: Set<String>, val listeners: Set<String>)
 
 /**
  * منطق تشخیص (برای جلوگیری از هشدار اشتباه روی برنامه‌های عادی مثل تلگرام):
@@ -134,8 +134,8 @@ object Scanner {
             }
         }
 
-        val installer = if (system) null else installer(pm, pkg)
-        val fromStore = !system && installer != null && installer in TRUSTED_INSTALLERS
+        val inst = if (system) null else installer(pm, pkg)
+        val fromStore = !system && inst != null && inst in TRUSTED_INSTALLERS
 
         // برنامه‌ی سیستمی یا فروشگاهی: فقط امضای ویروس
         if (sig) return Finding(pkg, label, Level.THREAT, 20, reasons, system, hash)
@@ -154,7 +154,7 @@ object Scanner {
         if (hasSms && a11yOn) { score += 3; reasons += "ترکیب پیامک + دسترسی‌پذیری (الگوی تروجان بانکی)" }
         if (pm.getLaunchIntentForPackage(pkg) == null) { score += 3; reasons += "آیکون ندارد و پنهان است" }
         score += 1
-        reasons += "نصب از منبع ناشناس (${installer ?: "نامعلوم"})"
+        reasons += "نصب از منبع ناشناس (${inst ?: "نامعلوم"})"
 
         val level = when {
             score >= THREAT_SCORE -> Level.THREAT
