@@ -164,7 +164,7 @@ private fun Panel(border: Color = Neon, content: @Composable ColumnScope.() -> U
         Modifier.fillMaxWidth()
             .clip(shape)
             .background(Brush.verticalGradient(listOf(Color(0xF20C1C17), Color(0xF2050D0B))))
-            .border(Brush.horizontalGradient(listOf(border.copy(alpha = .95f), border.copy(alpha = .28f), Cyan.copy(alpha = .55f))), shape)
+            .border(1.dp, Brush.horizontalGradient(listOf(border.copy(alpha = .95f), border.copy(alpha = .28f), Cyan.copy(alpha = .55f))), shape)
     ) {
         Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(7.dp), content = content)
     }
