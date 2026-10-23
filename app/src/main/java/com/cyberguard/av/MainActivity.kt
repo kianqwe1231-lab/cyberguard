@@ -127,7 +127,7 @@ private fun levelColor(l: Level) = when (l) {
 }
 
 private fun levelFa(l: Level) = when (l) {
-    Level.THREAT -> "ویروس"; Level.SUSPICIOUS -> "مشکوک"; Level.CLEAN -> "سالم"
+    Level.THREAT -> "ظˆغŒط±ظˆط³"; Level.SUSPICIOUS -> "ظ…ط´ع©ظˆع©"; Level.CLEAN -> "ط³ط§ظ„ظ…"
 }
 
 private fun isInstalled(ctx: Context, pkg: String): Boolean = try {
@@ -150,9 +150,9 @@ private fun humanSize(b: Long): String = when {
 }
 
 private fun advice(f: Finding): String = when {
-    f.level == Level.THREAT && f.system -> "برنامه‌ی سیستمی است و حذف نمی‌شود؛ از تنظیمات غیرفعالش کن."
-    f.level == Level.THREAT -> "پیشنهاد: همین الان حذفش کن."
-    else -> "اگر خودت نصبش کرده‌ای و می‌شناسی «نادیده بگیر»؛ وگرنه حذفش کن."
+    f.level == Level.THREAT && f.system -> "ط¨ط±ظ†ط§ظ…ظ‡â€ŒغŒ ط³غŒط³طھظ…غŒ ط§ط³طھ ظˆ ط­ط°ظپ ظ†ظ…غŒâ€Œط´ظˆط¯ط› ط§ط² طھظ†ط¸غŒظ…ط§طھ ط؛غŒط±ظپط¹ط§ظ„ط´ ع©ظ†."
+    f.level == Level.THREAT -> "ظ¾غŒط´ظ†ظ‡ط§ط¯: ظ‡ظ…غŒظ† ط§ظ„ط§ظ† ط­ط°ظپط´ ع©ظ†."
+    else -> "ط§ع¯ط± ط®ظˆط¯طھ ظ†طµط¨ط´ ع©ط±ط¯ظ‡â€Œط§غŒ ظˆ ظ…غŒâ€Œط´ظ†ط§ط³غŒ آ«ظ†ط§ط¯غŒط¯ظ‡ ط¨ع¯غŒط±آ»ط› ظˆع¯ط±ظ†ظ‡ ط­ط°ظپط´ ع©ظ†."
 }
 
 // ================================================================ UI pieces
@@ -221,7 +221,7 @@ private fun GlitchTitle(text: String) {
 
 @Composable
 private fun MatrixRain(modifier: Modifier = Modifier) {
-    val glyphs = remember { "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄ01ABCDEF<>{}/#".toCharArray() }
+    val glyphs = remember { "ï½±ï½²ï½³ï½´ï½µï½¶ï½·ï½¸ï½¹ï½؛ï½»ï½¼ï½½ï½¾ï½؟ï¾€ï¾پï¾‚ï¾ƒï¾„01ABCDEF<>{}/#".toCharArray() }
     val cols = 26
     val drops = remember { IntArray(cols) { (it * 7) % 40 } }
     var tick by remember { mutableStateOf(0) }
@@ -267,25 +267,145 @@ private fun Scanlines(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Radar(scanning: Boolean, label: String, color: Color) {
-    val t = rememberInfiniteTransition(label = "radar")
-    val angle by t.animateFloat(0f, 360f, infiniteRepeatable(tween(1600, easing = LinearEasing)), label = "angle")
-    Box(Modifier.size(200.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
-            val c = center
-            val r = size.minDimension / 2
-            listOf(1f, .66f, .33f).forEach { drawCircle(color.copy(alpha = .45f), r * it, c, style = Stroke(2f)) }
-            drawLine(color.copy(alpha = .25f), Offset(c.x - r, c.y), Offset(c.x + r, c.y))
-            drawLine(color.copy(alpha = .25f), Offset(c.x, c.y - r), Offset(c.x, c.y + r))
-            if (scanning) rotate(angle, c) {
-                drawArc(
-                    brush = Brush.sweepGradient(0f to Color.Transparent, 0.2f to color.copy(alpha = .6f), center = c),
-                    startAngle = 0f, sweepAngle = 70f, useCenter = true,
-                    topLeft = Offset(c.x - r, c.y - r), size = Size(r * 2, r * 2)
+private fun NexusPanel(
+    scanning: Boolean,
+    progress: Int,
+    current: String,
+    filesSeen: Int,
+    logs: List<String>,
+    heavy: Boolean,
+    threats: Int
+) {
+    val accent = if (threats > 0) Red else Neon
+    val pct = progress.coerceIn(0, 100)
+
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF07110D), RoundedCornerShape(12.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    "NEXUS // SCAN CORE",
+                    color = Cyan,
+                    fontFamily = Mono,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    if (scanning) "LIVE ANALYSIS IN PROGRESS" else "THREAT ANALYSIS SYSTEM",
+                    color = Dimmed,
+                    fontFamily = Mono,
+                    fontSize = 10.sp
+                )
+            }
+            Text(
+                if (scanning) "$pct%" else if (threats > 0) "ALERT" else "READY",
+                color = accent,
+                fontFamily = Mono,
+                fontWeight = FontWeight.Bold,
+                fontSize = 19.sp
+            )
+        }
+
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(5.dp)
+                .background(Color(0xFF183126), RoundedCornerShape(4.dp))
+        ) {
+            if (scanning) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(pct / 100f)
+                        .height(5.dp)
+                        .background(accent, RoundedCornerShape(4.dp))
+                )
+            } else {
+                Box(
+                    Modifier
+                        .fillMaxWidth(if (progress > 0) pct / 100f else 1f)
+                        .height(5.dp)
+                        .background(accent.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
                 )
             }
         }
-        Glow(label, color, 32)
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Column(
+                Modifier.weight(1f)
+                    .background(Color(0xFF0D1D15), RoundedCornerShape(8.dp))
+                    .padding(10.dp)
+            ) {
+                Text("SCAN MODE", color = Dimmed, fontSize = 10.sp, fontFamily = Mono)
+                Text(if (heavy) "DEEP" else "QUICK", color = Neon, fontSize = 15.sp, fontFamily = Mono)
+            }
+            Column(
+                Modifier.weight(1f)
+                    .background(Color(0xFF0D1D15), RoundedCornerShape(8.dp))
+                    .padding(10.dp)
+            ) {
+                Text("FILES CHECKED", color = Dimmed, fontSize = 10.sp, fontFamily = Mono)
+                Text("$filesSeen", color = Cyan, fontSize = 15.sp, fontFamily = Mono)
+            }
+            Column(
+                Modifier.weight(1f)
+                    .background(Color(0xFF0D1D15), RoundedCornerShape(8.dp))
+                    .padding(10.dp)
+            ) {
+                Text("THREATS", color = Dimmed, fontSize = 10.sp, fontFamily = Mono)
+                Text("$threats", color = if (threats > 0) Red else Neon, fontSize = 15.sp, fontFamily = Mono)
+            }
+        }
+
+        Text(
+            if (scanning) "ACTIVE TARGET" else "SYSTEM STATUS",
+            color = Cyan,
+            fontFamily = Mono,
+            fontSize = 11.sp
+        )
+        Text(
+            if (scanning && current.isNotBlank()) current
+            else if (scanning) "Initializing scan engine..." else "NO MERCY FOR MALWARE",
+            color = Soft,
+            fontFamily = Mono,
+            fontSize = 12.sp
+        )
+
+        Box(
+            Modifier.fillMaxWidth().height(1.dp)
+                .background(Neon.copy(alpha = 0.35f))
+        )
+
+        Text("LIVE EVENT STREAM", color = Cyan, fontFamily = Mono, fontSize = 11.sp)
+        if (logs.isEmpty()) {
+            Text(
+                "> Awaiting scan events...",
+                color = Dimmed,
+                fontFamily = Mono,
+                fontSize = 11.sp
+            )
+        } else {
+            logs.takeLast(4).forEach { entry ->
+                Text(
+                    "> $entry",
+                    color = Neon,
+                    fontFamily = Mono,
+                    fontSize = 10.sp,
+                    maxLines = 2
+                )
+            }
+        }
     }
 }
 
@@ -298,7 +418,7 @@ private fun Screen() {
     val st = remember { AvState() }
     var tab by remember { mutableStateOf(0) }
 
-    // صف حذف برنامه‌ها: هر برنامه یک دیالوگ تأیید سیستم دارد؛ بعد از هرکدام نوبت بعدی می‌آید
+    // طµظپ ط­ط°ظپ ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§: ظ‡ط± ط¨ط±ظ†ط§ظ…ظ‡ غŒع© ط¯غŒط§ظ„ظˆع¯ طھط£غŒغŒط¯ ط³غŒط³طھظ… ط¯ط§ط±ط¯ط› ط¨ط¹ط¯ ط§ط² ظ‡ط±ع©ط¯ط§ظ… ظ†ظˆط¨طھ ط¨ط¹ط¯غŒ ظ…غŒâ€Œط¢غŒط¯
     val uninstall = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         st.findings = st.findings.filter { isInstalled(ctx, it.pkg) }
         st.queue = st.queue.drop(1)
@@ -317,7 +437,7 @@ private fun Screen() {
                     tonalElevation = 0.dp,
                     modifier = Modifier.border(BorderStroke(1.dp, Neon.copy(alpha = .22f)))
                 ) {
-                    listOf("اسکن" to ">_", "ابزارها" to "{ }", "قرنطینه" to "[#]", "وضعیت" to "%")
+                    listOf("ط§ط³ع©ظ†" to ">_", "ط§ط¨ط²ط§ط±ظ‡ط§" to "{ }", "ظ‚ط±ظ†ط·غŒظ†ظ‡" to "[#]", "ظˆط¶ط¹غŒطھ" to "%")
                         .forEachIndexed { i, (label, glyph) ->
                             NavigationBarItem(
                                 selected = tab == i, onClick = { tab = i },
@@ -380,7 +500,7 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
         st.needAccess = false; st.error = null
         st.scanning = true; st.stop.set(false); st.wasStopped = false
         st.report = null; st.findings = emptyList(); st.fileFindings = emptyList()
-        st.filesSeen = 0; st.progress = 0; st.logTail = emptyList(); st.stage = "برنامه‌ها"
+        st.filesSeen = 0; st.progress = 0; st.logTail = emptyList(); st.stage = "ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§"
         scope.launch {
             try {
                 val r = withContext(Dispatchers.Default) {
@@ -394,7 +514,7 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
                 st.report = r
                 st.findings = r.findings
                 if (st.heavy && !r.stopped) {
-                    st.stage = "فایل‌ها"
+                    st.stage = "ظپط§غŒظ„â€Œظ‡ط§"
                     val fr = withContext(Dispatchers.IO) {
                         FileSweep.sweep(ctx, Store.ignored(ctx), shouldStop = { st.stop.get() }) { pct, seen, path ->
                             st.progress = 30 + pct * 70 / 100
@@ -411,7 +531,7 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
                 val bad = st.findings.count { it.level == Level.THREAT } + st.fileFindings.count { it.level == Level.THREAT }
                 Store.addHistory(
                     ctx,
-                    "$whenText · ${if (st.heavy) "سنگین" else "سبک"} · ${r.scanned} برنامه · ${st.filesSeen} فایل · $bad ویروس"
+                    "$whenText آ· ${if (st.heavy) "ط³ظ†ع¯غŒظ†" else "ط³ط¨ع©"} آ· ${r.scanned} ط¨ط±ظ†ط§ظ…ظ‡ آ· ${st.filesSeen} ظپط§غŒظ„ آ· $bad ظˆغŒط±ظˆط³"
                 )
             } catch (e: Exception) {
                 st.error = e.message ?: e.toString()
@@ -439,7 +559,7 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
             Modifier.fillMaxWidth().height(1.dp)
                 .background(Brush.horizontalGradient(listOf(Color.Transparent, Neon.copy(alpha = .7f), Cyan.copy(alpha = .65f), Color.Transparent)))
         )
-        Radar(st.scanning, label, radarColor)
+        NexusPanel(st.scanning, st.progress, st.current, st.filesSeen, st.logTail, st.heavy, totalThreats)
         Text(
             if (st.scanning) st.current else "NO MERCY FOR MALWARE",
             color = Dimmed, fontFamily = Mono, fontSize = 12.sp, maxLines = 1
@@ -447,20 +567,20 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = !st.heavy, enabled = !st.scanning, onClick = { st.heavy = false },
-                label = { Text("اسکن سبک") }, colors = chipColors())
+                label = { Text("ط§ط³ع©ظ† ط³ط¨ع©") }, colors = chipColors())
             FilterChip(selected = st.heavy, enabled = !st.scanning, onClick = { st.heavy = true },
-                label = { Text("اسکن سنگین") }, colors = chipColors())
+                label = { Text("ط§ط³ع©ظ† ط³ظ†ع¯غŒظ†") }, colors = chipColors())
         }
         Dim(
-            if (st.heavy) "سنگین: همه‌ی برنامه‌ها + گشتن کل حافظه برای فایل‌های مشکوک و ویروسی"
-            else "سبک: فقط چک برنامه‌های نصب‌شده"
+            if (st.heavy) "ط³ظ†ع¯غŒظ†: ظ‡ظ…ظ‡â€ŒغŒ ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§ + ع¯ط´طھظ† ع©ظ„ ط­ط§ظپط¸ظ‡ ط¨ط±ط§غŒ ظپط§غŒظ„â€Œظ‡ط§غŒ ظ…ط´ع©ظˆع© ظˆ ظˆغŒط±ظˆط³غŒ"
+            else "ط³ط¨ع©: ظپظ‚ط· ع†ع© ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§غŒ ظ†طµط¨â€Œط´ط¯ظ‡"
         )
 
         if (st.needAccess) {
             Panel(Amber) {
-                Title("برای اسکن سنگین، دسترسی به فایل‌ها لازم است", Amber)
-                Body("اجازه‌ی «دسترسی به همه‌ی فایل‌ها» را بده، برگرد و دوباره اسکن را بزن.")
-                Button(onClick = { askFileAccess() }) { Text("دادن اجازه") }
+                Title("ط¨ط±ط§غŒ ط§ط³ع©ظ† ط³ظ†ع¯غŒظ†طŒ ط¯ط³طھط±ط³غŒ ط¨ظ‡ ظپط§غŒظ„â€Œظ‡ط§ ظ„ط§ط²ظ… ط§ط³طھ", Amber)
+                Body("ط§ط¬ط§ط²ظ‡â€ŒغŒ آ«ط¯ط³طھط±ط³غŒ ط¨ظ‡ ظ‡ظ…ظ‡â€ŒغŒ ظپط§غŒظ„â€Œظ‡ط§آ» ط±ط§ ط¨ط¯ظ‡طŒ ط¨ط±ع¯ط±ط¯ ظˆ ط¯ظˆط¨ط§ط±ظ‡ ط§ط³ع©ظ† ط±ط§ ط¨ط²ظ†.")
+                Button(onClick = { askFileAccess() }) { Text("ط¯ط§ط¯ظ† ط§ط¬ط§ط²ظ‡") }
             }
         }
 
@@ -468,19 +588,19 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
             OutlinedButton(
                 onClick = { st.stop.set(true) }, border = BorderStroke(1.dp, Red),
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("■ توقف اسکن", color = Red, fontFamily = Mono) }
-            if (st.heavy) Dim("مرحله: ${st.stage} · فایل‌های بررسی‌شده: ${st.filesSeen}")
+            ) { Text("â–  طھظˆظ‚ظپ ط§ط³ع©ظ†", color = Red, fontFamily = Mono) }
+            if (st.heavy) Dim("ظ…ط±ط­ظ„ظ‡: ${st.stage} آ· ظپط§غŒظ„â€Œظ‡ط§غŒ ط¨ط±ط±ط³غŒâ€Œط´ط¯ظ‡: ${st.filesSeen}")
             Panel {
                 Text("root@guard:~# scan --${if (st.heavy) "heavy" else "light"}", color = Dimmed, fontFamily = Mono, fontSize = 11.sp)
                 st.logTail.forEach { Text(it, color = Neon, fontFamily = Mono, fontSize = 11.sp, maxLines = 1) }
             }
         } else {
             Button(onClick = { startScan() }, modifier = Modifier.fillMaxWidth()) {
-                Text(">_ شروع اسکن", fontFamily = Mono)
+                Text(">_ ط´ط±ظˆط¹ ط§ط³ع©ظ†", fontFamily = Mono)
             }
         }
 
-        st.error?.let { e -> Panel(Red) { Body("خطا در اسکن: $e", Red) } }
+        st.error?.let { e -> Panel(Red) { Body("ط®ط·ط§ ط¯ط± ط§ط³ع©ظ†: $e", Red) } }
 
         if (rep != null && !st.scanning) {
             SummaryCard(st, rep)
@@ -489,7 +609,7 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
                     onClick = { confirmAll = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Red, contentColor = Color.Black),
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("☠ حذف همه‌ی ویروس‌ها ($totalThreats)", fontWeight = FontWeight.Bold) }
+                ) { Text("âک  ط­ط°ظپ ظ‡ظ…ظ‡â€ŒغŒ ظˆغŒط±ظˆط³â€Œظ‡ط§ ($totalThreats)", fontWeight = FontWeight.Bold) }
             }
 
             st.findings.forEach { f ->
@@ -537,10 +657,10 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
         AlertDialog(
             onDismissRequest = { confirmAll = false },
             containerColor = PanelBg,
-            title = { Text("حذف همه‌ی ویروس‌ها؟", color = Red) },
+            title = { Text("ط­ط°ظپ ظ‡ظ…ظ‡â€ŒغŒ ظˆغŒط±ظˆط³â€Œظ‡ط§طں", color = Red) },
             text = {
                 Text(
-                    "${fileThreats.size} فایل ویروسی مستقیم حذف می‌شود و ${appThreats.size} برنامه برای حذف به تأیید خودت می‌رسد.",
+                    "${fileThreats.size} ظپط§غŒظ„ ظˆغŒط±ظˆط³غŒ ظ…ط³طھظ‚غŒظ… ط­ط°ظپ ظ…غŒâ€Œط´ظˆط¯ ظˆ ${appThreats.size} ط¨ط±ظ†ط§ظ…ظ‡ ط¨ط±ط§غŒ ط­ط°ظپ ط¨ظ‡ طھط£غŒغŒط¯ ط®ظˆط¯طھ ظ…غŒâ€Œط±ط³ط¯.",
                     color = Soft
                 )
             },
@@ -552,9 +672,9 @@ private fun ScanTab(st: AvState, scope: CoroutineScope) {
                         st.fileFindings = st.fileFindings.filter { f -> File(f.path).exists() }
                         if (appThreats.isNotEmpty()) st.queue = appThreats
                     }
-                }) { Text("حذف", color = Red) }
+                }) { Text("ط­ط°ظپ", color = Red) }
             },
-            dismissButton = { TextButton(onClick = { confirmAll = false }) { Text("لغو", color = Neon) } }
+            dismissButton = { TextButton(onClick = { confirmAll = false }) { Text("ظ„ط؛ظˆ", color = Neon) } }
         )
     }
 }
@@ -566,15 +686,15 @@ private fun SummaryCard(st: AvState, r: ScanReport) {
     val color = when { threats > 0 -> Red; sus > 0 -> Amber; else -> Neon }
     val secs = String.format(Locale.US, "%.1f", r.durationMs / 1000.0)
     val head = when {
-        threats > 0 -> "⛔ گوشی شما $threats ویروس دارد"
-        sus > 0 -> "⚠ $sus مورد مشکوک پیدا شد"
-        else -> "✅ چیزی پیدا نشد؛ گوشی سالم است"
+        threats > 0 -> "â›” ع¯ظˆط´غŒ ط´ظ…ط§ $threats ظˆغŒط±ظˆط³ ط¯ط§ط±ط¯"
+        sus > 0 -> "âڑ  $sus ظ…ظˆط±ط¯ ظ…ط´ع©ظˆع© ظ¾غŒط¯ط§ ط´ط¯"
+        else -> "âœ… ع†غŒط²غŒ ظ¾غŒط¯ط§ ظ†ط´ط¯ط› ع¯ظˆط´غŒ ط³ط§ظ„ظ… ط§ط³طھ"
     }
     Panel(color) {
         Text(head, color = color, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-        if (st.wasStopped) Body("اسکن را متوقف کردی؛ نتیجه‌ی ناقص است.", Amber)
-        Body("${r.scanned} برنامه بررسی شد" + (if (r.heavy) " و ${st.filesSeen} فایل" else "") + " ($secs ثانیه برای برنامه‌ها)")
-        if (threats + sus > 0) Dim("برای هر مورد می‌توانی حذف، قرنطینه یا «نادیده بگیر» را بزنی.")
+        if (st.wasStopped) Body("ط§ط³ع©ظ† ط±ط§ ظ…طھظˆظ‚ظپ ع©ط±ط¯غŒط› ظ†طھغŒط¬ظ‡â€ŒغŒ ظ†ط§ظ‚طµ ط§ط³طھ.", Amber)
+        Body("${r.scanned} ط¨ط±ظ†ط§ظ…ظ‡ ط¨ط±ط±ط³غŒ ط´ط¯" + (if (r.heavy) " ظˆ ${st.filesSeen} ظپط§غŒظ„" else "") + " ($secs ط«ط§ظ†غŒظ‡ ط¨ط±ط§غŒ ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§)")
+        if (threats + sus > 0) Dim("ط¨ط±ط§غŒ ظ‡ط± ظ…ظˆط±ط¯ ظ…غŒâ€Œطھظˆط§ظ†غŒ ط­ط°ظپطŒ ظ‚ط±ظ†ط·غŒظ†ظ‡ غŒط§ آ«ظ†ط§ط¯غŒط¯ظ‡ ط¨ع¯غŒط±آ» ط±ط§ ط¨ط²ظ†غŒ.")
     }
 }
 
@@ -582,16 +702,16 @@ private fun SummaryCard(st: AvState, r: ScanReport) {
 private fun FindingCard(f: Finding, onRemove: () -> Unit, onIgnore: () -> Unit) {
     val c = levelColor(f.level)
     Panel(c) {
-        Text("${levelFa(f.level)} · ${f.label}", color = c, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text("${levelFa(f.level)} آ· ${f.label}", color = c, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Text(f.pkg, color = Dimmed, fontFamily = Mono, fontSize = 11.sp)
-        f.reasons.forEach { Body("• $it") }
+        f.reasons.forEach { Body("â€¢ $it") }
         Body(advice(f), Amber)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = onRemove,
                 colors = ButtonDefaults.buttonColors(containerColor = c, contentColor = Color.Black)
-            ) { Text(if (f.system) "غیرفعال‌سازی" else "حذف") }
-            OutlinedButton(onClick = onIgnore) { Text("نادیده بگیر") }
+            ) { Text(if (f.system) "ط؛غŒط±ظپط¹ط§ظ„â€Œط³ط§ط²غŒ" else "ط­ط°ظپ") }
+            OutlinedButton(onClick = onIgnore) { Text("ظ†ط§ط¯غŒط¯ظ‡ ط¨ع¯غŒط±") }
         }
     }
 }
@@ -600,17 +720,17 @@ private fun FindingCard(f: Finding, onRemove: () -> Unit, onIgnore: () -> Unit) 
 private fun FileFindingCard(f: FileFinding, onQuarantine: () -> Unit, onDelete: () -> Unit, onIgnore: () -> Unit) {
     val c = levelColor(f.level)
     Panel(c) {
-        Text("${levelFa(f.level)} · ${f.name}", color = c, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text("${levelFa(f.level)} آ· ${f.name}", color = c, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Text(f.path, color = Dimmed, fontFamily = Mono, fontSize = 10.sp)
         Dim(humanSize(f.size))
-        f.reasons.forEach { Body("• $it") }
+        f.reasons.forEach { Body("â€¢ $it") }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Button(
                 onClick = onDelete,
                 colors = ButtonDefaults.buttonColors(containerColor = c, contentColor = Color.Black)
-            ) { Text("حذف") }
-            OutlinedButton(onClick = onQuarantine) { Text("قرنطینه") }
-            OutlinedButton(onClick = onIgnore) { Text("نادیده") }
+            ) { Text("ط­ط°ظپ") }
+            OutlinedButton(onClick = onQuarantine) { Text("ظ‚ط±ظ†ط·غŒظ†ظ‡") }
+            OutlinedButton(onClick = onIgnore) { Text("ظ†ط§ط¯غŒط¯ظ‡") }
         }
     }
 }
@@ -618,19 +738,19 @@ private fun FileFindingCard(f: FileFinding, onQuarantine: () -> Unit, onDelete: 
 @Composable
 private fun ReportCard(st: AvState, r: ScanReport) {
     Panel {
-        Title("گزارش عملکرد")
+        Title("ع¯ط²ط§ط±ط´ ط¹ظ…ظ„ع©ط±ط¯")
         val sigCount = Signatures.hashes.size + Signatures.packages.size
-        Body("✔ پایگاه امضا: $sigCount امضا" + if (sigCount == 0) " (خالی؛ فعلاً رفتاری)" else "")
-        Body("✔ برنامه‌های پلی‌استور و سیستمی فقط با امضای ویروس شناسایی می‌شوند؛ مجوز تنها هرگز هشدار نمی‌دهد (تلگرام و مثل آن امن‌اند).")
-        Body("✔ برنامه‌ی نصب‌شده از منبع ناشناس: مجوزها + دسترسی‌پذیری + مدیر دستگاه + خواندن اعلان + پنهان بودن.")
+        Body("âœ” ظ¾ط§غŒع¯ط§ظ‡ ط§ظ…ط¶ط§: $sigCount ط§ظ…ط¶ط§" + if (sigCount == 0) " (ط®ط§ظ„غŒط› ظپط¹ظ„ط§ظ‹ ط±ظپطھط§ط±غŒ)" else "")
+        Body("âœ” ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§غŒ ظ¾ظ„غŒâ€Œط§ط³طھظˆط± ظˆ ط³غŒط³طھظ…غŒ ظپظ‚ط· ط¨ط§ ط§ظ…ط¶ط§غŒ ظˆغŒط±ظˆط³ ط´ظ†ط§ط³ط§غŒغŒ ظ…غŒâ€Œط´ظˆظ†ط¯ط› ظ…ط¬ظˆط² طھظ†ظ‡ط§ ظ‡ط±ع¯ط² ظ‡ط´ط¯ط§ط± ظ†ظ…غŒâ€Œط¯ظ‡ط¯ (طھظ„ع¯ط±ط§ظ… ظˆ ظ…ط«ظ„ ط¢ظ† ط§ظ…ظ†â€Œط§ظ†ط¯).")
+        Body("âœ” ط¨ط±ظ†ط§ظ…ظ‡â€ŒغŒ ظ†طµط¨â€Œط´ط¯ظ‡ ط§ط² ظ…ظ†ط¨ط¹ ظ†ط§ط´ظ†ط§ط³: ظ…ط¬ظˆط²ظ‡ط§ + ط¯ط³طھط±ط³غŒâ€Œظ¾ط°غŒط±غŒ + ظ…ط¯غŒط± ط¯ط³طھع¯ط§ظ‡ + ط®ظˆط§ظ†ط¯ظ† ط§ط¹ظ„ط§ظ† + ظ¾ظ†ظ‡ط§ظ† ط¨ظˆط¯ظ†.")
         if (r.heavy) {
-            Body("✔ هش SHA-256 همه‌ی APKهای نصب‌شده")
-            Body("✔ گشتن کل حافظه: ${st.filesSeen} فایل (EICAR/امضا، پسوند دوگانه، فایل اجرایی با پسوند جعلی، APK نصب‌نشده با مجوز پرخطر)")
-            Dim("پوشه‌های Android/data و Android/obb را خود اندروید قفل کرده و قابل اسکن نیستند.")
+            Body("âœ” ظ‡ط´ SHA-256 ظ‡ظ…ظ‡â€ŒغŒ APKظ‡ط§غŒ ظ†طµط¨â€Œط´ط¯ظ‡")
+            Body("âœ” ع¯ط´طھظ† ع©ظ„ ط­ط§ظپط¸ظ‡: ${st.filesSeen} ظپط§غŒظ„ (EICAR/ط§ظ…ط¶ط§طŒ ظ¾ط³ظˆظ†ط¯ ط¯ظˆع¯ط§ظ†ظ‡طŒ ظپط§غŒظ„ ط§ط¬ط±ط§غŒغŒ ط¨ط§ ظ¾ط³ظˆظ†ط¯ ط¬ط¹ظ„غŒطŒ APK ظ†طµط¨â€Œظ†ط´ط¯ظ‡ ط¨ط§ ظ…ط¬ظˆط² ظ¾ط±ط®ط·ط±)")
+            Dim("ظ¾ظˆط´ظ‡â€Œظ‡ط§غŒ Android/data ظˆ Android/obb ط±ط§ ط®ظˆط¯ ط§ظ†ط¯ط±ظˆغŒط¯ ظ‚ظپظ„ ع©ط±ط¯ظ‡ ظˆ ظ‚ط§ط¨ظ„ ط§ط³ع©ظ† ظ†غŒط³طھظ†ط¯.")
         } else {
-            Dim("اسکن سبک فقط برنامه‌ها را می‌بیند؛ برای فایل‌ها «اسکن سنگین» را بزن.")
+            Dim("ط§ط³ع©ظ† ط³ط¨ع© ظپظ‚ط· ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§ ط±ط§ ظ…غŒâ€Œط¨غŒظ†ط¯ط› ط¨ط±ط§غŒ ظپط§غŒظ„â€Œظ‡ط§ آ«ط§ط³ع©ظ† ط³ظ†ع¯غŒظ†آ» ط±ط§ ط¨ط²ظ†.")
         }
-        Dim("امتیاز رفتاری ≥ ۸ مشکوک و ≥ ۱۴ ویروس است. هشدار یعنی «بررسی کن»، نه حکم قطعی.")
+        Dim("ط§ظ…طھغŒط§ط² ط±ظپطھط§ط±غŒ â‰¥ غ¸ ظ…ط´ع©ظˆع© ظˆ â‰¥ غ±غ´ ظˆغŒط±ظˆط³ ط§ط³طھ. ظ‡ط´ط¯ط§ط± غŒط¹ظ†غŒ آ«ط¨ط±ط±ط³غŒ ع©ظ†آ»طŒ ظ†ظ‡ ط­ع©ظ… ظ‚ط·ط¹غŒ.")
     }
 }
 
@@ -639,10 +759,10 @@ private fun HealthCard() {
     val ctx = LocalContext.current
     val h = remember { DeviceHealth.snapshot(ctx) }
     Panel {
-        Title("سلامت دستگاه")
-        Body("باتری: ${h.battery}%" + if (h.charging) " ⚡ در حال شارژ" else "")
-        Body("حافظه‌ی آزاد: ${String.format(Locale.US, "%.1f", h.storageFreeGb)} از ${String.format(Locale.US, "%.1f", h.storageTotalGb)} گیگ")
-        Body("RAM آزاد: ${h.ramFreeMb} از ${h.ramTotalMb} مگ")
+        Title("ط³ظ„ط§ظ…طھ ط¯ط³طھع¯ط§ظ‡")
+        Body("ط¨ط§طھط±غŒ: ${h.battery}%" + if (h.charging) " âڑ، ط¯ط± ط­ط§ظ„ ط´ط§ط±عک" else "")
+        Body("ط­ط§ظپط¸ظ‡â€ŒغŒ ط¢ط²ط§ط¯: ${String.format(Locale.US, "%.1f", h.storageFreeGb)} ط§ط² ${String.format(Locale.US, "%.1f", h.storageTotalGb)} ع¯غŒع¯")
+        Body("RAM ط¢ط²ط§ط¯: ${h.ramFreeMb} ط§ط² ${h.ramTotalMb} ظ…ع¯")
     }
 }
 
@@ -676,17 +796,17 @@ private fun ToolsTab() {
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Glow("[ ابزارها ]")
+        Glow("[ ط§ط¨ط²ط§ط±ظ‡ط§ ]")
 
         Panel {
-            Title("بررسی لینک: سالمه یا نه؟")
+            Title("ط¨ط±ط±ط³غŒ ظ„غŒظ†ع©: ط³ط§ظ„ظ…ظ‡ غŒط§ ظ†ظ‡طں")
             OutlinedTextField(
                 value = url, onValueChange = { url = it }, singleLine = true,
-                label = { Text("لینک را اینجا بچسبان") }, modifier = Modifier.fillMaxWidth()
+                label = { Text("ظ„غŒظ†ع© ط±ط§ ط§غŒظ†ط¬ط§ ط¨ع†ط³ط¨ط§ظ†") }, modifier = Modifier.fillMaxWidth()
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { clip.getText()?.text?.let { url = it.trim() } }) { Text("جای‌گذاری") }
-                Button(onClick = { if (url.isNotBlank()) urlRes = UrlChecker.check(url.trim()) }) { Text(">_ بررسی") }
+                OutlinedButton(onClick = { clip.getText()?.text?.let { url = it.trim() } }) { Text("ط¬ط§غŒâ€Œع¯ط°ط§ط±غŒ") }
+                Button(onClick = { if (url.isNotBlank()) urlRes = UrlChecker.check(url.trim()) }) { Text(">_ ط¨ط±ط±ط³غŒ") }
             }
         }
         urlRes?.let { r ->
@@ -694,40 +814,40 @@ private fun ToolsTab() {
             Panel(c) {
                 Text(
                     when (r.level) {
-                        Level.CLEAN -> "✅ ظاهراً سالم"
-                        Level.SUSPICIOUS -> "⚠ مشکوک"
-                        Level.THREAT -> "⛔ خطرناک (احتمال فیشینگ)"
+                        Level.CLEAN -> "âœ… ط¸ط§ظ‡ط±ط§ظ‹ ط³ط§ظ„ظ…"
+                        Level.SUSPICIOUS -> "âڑ  ظ…ط´ع©ظˆع©"
+                        Level.THREAT -> "â›” ط®ط·ط±ظ†ط§ع© (ط§ط­طھظ…ط§ظ„ ظپغŒط´غŒظ†ع¯)"
                     },
                     color = c, fontWeight = FontWeight.Bold, fontSize = 18.sp
                 )
                 r.host?.let { Text(it, color = Dimmed, fontFamily = Mono, fontSize = 12.sp) }
-                r.reasons.forEach { Body("• $it") }
-                Dim("امتیاز ریسک: ${r.score}. این بررسی ظاهری است و تضمین امنیت نیست؛ لینک ناشناس را با احتیاط باز کن.")
+                r.reasons.forEach { Body("â€¢ $it") }
+                Dim("ط§ظ…طھغŒط§ط² ط±غŒط³ع©: ${r.score}. ط§غŒظ† ط¨ط±ط±ط³غŒ ط¸ط§ظ‡ط±غŒ ط§ط³طھ ظˆ طھط¶ظ…غŒظ† ط§ظ…ظ†غŒطھ ظ†غŒط³طھط› ظ„غŒظ†ع© ظ†ط§ط´ظ†ط§ط³ ط±ط§ ط¨ط§ ط§ط­طھغŒط§ط· ط¨ط§ط² ع©ظ†.")
             }
         }
 
         Panel {
-            Title("اسکن یک فایل")
-            Body("هر فایلی را انتخاب کن؛ هش SHA-256 و الگوهای مشکوک بررسی می‌شود. فایل از گوشی خارج نمی‌شود.")
+            Title("ط§ط³ع©ظ† غŒع© ظپط§غŒظ„")
+            Body("ظ‡ط± ظپط§غŒظ„غŒ ط±ط§ ط§ظ†طھط®ط§ط¨ ع©ظ†ط› ظ‡ط´ SHA-256 ظˆ ط§ظ„ع¯ظˆظ‡ط§غŒ ظ…ط´ع©ظˆع© ط¨ط±ط±ط³غŒ ظ…غŒâ€Œط´ظˆط¯. ظپط§غŒظ„ ط§ط² ع¯ظˆط´غŒ ط®ط§ط±ط¬ ظ†ظ…غŒâ€Œط´ظˆط¯.")
             Button(onClick = { picker.launch(arrayOf("*/*")) }, enabled = !fileBusy) {
-                Text(if (fileBusy) "در حال اسکن…" else ">_ انتخاب فایل")
+                Text(if (fileBusy) "ط¯ط± ط­ط§ظ„ ط§ط³ع©ظ†â€¦" else ">_ ط§ظ†طھط®ط§ط¨ ظپط§غŒظ„")
             }
         }
-        if (fileErr) Panel(Amber) { Body("فایل خوانده نشد.", Amber) }
+        if (fileErr) Panel(Amber) { Body("ظپط§غŒظ„ ط®ظˆط§ظ†ط¯ظ‡ ظ†ط´ط¯.", Amber) }
         fileRes?.let { r ->
             val c = levelColor(r.level)
             Panel(c) {
-                Text("${levelFa(r.level)} · ${r.name}", color = c, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("${levelFa(r.level)} آ· ${r.name}", color = c, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Dim(humanSize(r.size))
-                if (r.reasons.isEmpty()) Body("هیچ نشانه‌ی مشکوکی پیدا نشد.") else r.reasons.forEach { Body("• $it") }
+                if (r.reasons.isEmpty()) Body("ظ‡غŒع† ظ†ط´ط§ظ†ظ‡â€ŒغŒ ظ…ط´ع©ظˆع©غŒ ظ¾غŒط¯ط§ ظ†ط´ط¯.") else r.reasons.forEach { Body("â€¢ $it") }
                 Text("SHA256 ${r.sha256}", color = Dimmed, fontFamily = Mono, fontSize = 10.sp)
             }
         }
 
         Panel {
-            Title("امنیت Wi-Fi")
-            Body("نوع رمزنگاری شبکه‌ای که به آن وصلی را بررسی می‌کند.")
-            Button(onClick = { wifi = WifiAudit.check(ctx) }) { Text(">_ بررسی Wi-Fi") }
+            Title("ط§ظ…ظ†غŒطھ Wi-Fi")
+            Body("ظ†ظˆط¹ ط±ظ…ط²ظ†ع¯ط§ط±غŒ ط´ط¨ع©ظ‡â€Œط§غŒ ع©ظ‡ ط¨ظ‡ ط¢ظ† ظˆطµظ„غŒ ط±ط§ ط¨ط±ط±ط³غŒ ظ…غŒâ€Œع©ظ†ط¯.")
+            Button(onClick = { wifi = WifiAudit.check(ctx) }) { Text(">_ ط¨ط±ط±ط³غŒ Wi-Fi") }
         }
         wifi?.let { w ->
             val c = levelColor(w.level)
@@ -738,8 +858,8 @@ private fun ToolsTab() {
         }
 
         Panel {
-            Title("ممیزی حریم خصوصی")
-            Body("کدام برنامه‌ها مجوز میکروفن، دوربین، موقعیت و پیامک را واقعاً گرفته‌اند.")
+            Title("ظ…ظ…غŒط²غŒ ط­ط±غŒظ… ط®طµظˆطµغŒ")
+            Body("ع©ط¯ط§ظ… ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§ ظ…ط¬ظˆط² ظ…غŒع©ط±ظˆظپظ†طŒ ط¯ظˆط±ط¨غŒظ†طŒ ظ…ظˆظ‚ط¹غŒطھ ظˆ ظ¾غŒط§ظ…ع© ط±ط§ ظˆط§ظ‚ط¹ط§ظ‹ ع¯ط±ظپطھظ‡â€Œط§ظ†ط¯.")
             Button(
                 enabled = !privBusy,
                 onClick = {
@@ -749,20 +869,20 @@ private fun ToolsTab() {
                         privBusy = false
                     }
                 }
-            ) { Text(if (privBusy) "در حال بررسی…" else ">_ اجرای ممیزی") }
+            ) { Text(if (privBusy) "ط¯ط± ط­ط§ظ„ ط¨ط±ط±ط³غŒâ€¦" else ">_ ط§ط¬ط±ط§غŒ ظ…ظ…غŒط²غŒ") }
         }
         priv?.let { p ->
             Panel {
                 @Composable
                 fun Section(name: String, list: List<String>) {
                     Text("$name (${list.size})", color = Cyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Body(if (list.isEmpty()) "—" else list.take(10).joinToString("، ") + if (list.size > 10) " …" else "")
+                    Body(if (list.isEmpty()) "â€”" else list.take(10).joinToString("طŒ ") + if (list.size > 10) " â€¦" else "")
                 }
-                Section("میکروفن", p.mic)
-                Section("دوربین", p.camera)
-                Section("موقعیت مکانی", p.location)
-                Section("پیامک", p.sms)
-                Dim("فقط برنامه‌های غیرسیستمی. مجوز اضافی را از تنظیمات گوشی ← برنامه‌ها ← مجوزها ببند.")
+                Section("ظ…غŒع©ط±ظˆظپظ†", p.mic)
+                Section("ط¯ظˆط±ط¨غŒظ†", p.camera)
+                Section("ظ…ظˆظ‚ط¹غŒطھ ظ…ع©ط§ظ†غŒ", p.location)
+                Section("ظ¾غŒط§ظ…ع©", p.sms)
+                Dim("ظپظ‚ط· ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§غŒ ط؛غŒط±ط³غŒط³طھظ…غŒ. ظ…ط¬ظˆط² ط§ط¶ط§ظپغŒ ط±ط§ ط§ط² طھظ†ط¸غŒظ…ط§طھ ع¯ظˆط´غŒ â†گ ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§ â†گ ظ…ط¬ظˆط²ظ‡ط§ ط¨ط¨ظ†ط¯.")
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -782,9 +902,9 @@ private fun QuarantineTab() {
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Glow("[ قرنطینه ]")
-        Dim("فایل‌های مشکوک اینجا امن و غیرفعال نگه داشته می‌شوند. می‌توانی بازگردانی کنی یا برای همیشه حذف.")
-        if (items.isEmpty()) Panel { Body("قرنطینه خالی است.") }
+        Glow("[ ظ‚ط±ظ†ط·غŒظ†ظ‡ ]")
+        Dim("ظپط§غŒظ„â€Œظ‡ط§غŒ ظ…ط´ع©ظˆع© ط§غŒظ†ط¬ط§ ط§ظ…ظ† ظˆ ط؛غŒط±ظپط¹ط§ظ„ ظ†ع¯ظ‡ ط¯ط§ط´طھظ‡ ظ…غŒâ€Œط´ظˆظ†ط¯. ظ…غŒâ€Œطھظˆط§ظ†غŒ ط¨ط§ط²ع¯ط±ط¯ط§ظ†غŒ ع©ظ†غŒ غŒط§ ط¨ط±ط§غŒ ظ‡ظ…غŒط´ظ‡ ط­ط°ظپ.")
+        if (items.isEmpty()) Panel { Body("ظ‚ط±ظ†ط·غŒظ†ظ‡ ط®ط§ظ„غŒ ط§ط³طھ.") }
         items.forEach { it ->
             key(it.id) {
                 Panel(Amber) {
@@ -794,11 +914,11 @@ private fun QuarantineTab() {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = {
                             scope.launch { withContext(Dispatchers.IO) { Quarantine.restore(ctx, it) }; tick++ }
-                        }) { Text("بازگردانی") }
+                        }) { Text("ط¨ط§ط²ع¯ط±ط¯ط§ظ†غŒ") }
                         Button(
                             onClick = { scope.launch { withContext(Dispatchers.IO) { Quarantine.deleteForever(ctx, it) }; tick++ } },
                             colors = ButtonDefaults.buttonColors(containerColor = Red, contentColor = Color.Black)
-                        ) { Text("حذف دائمی") }
+                        ) { Text("ط­ط°ظپ ط¯ط§ط¦ظ…غŒ") }
                     }
                 }
             }
@@ -824,40 +944,40 @@ private fun StatusTab() {
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Glow("[ وضعیت ]")
+        Glow("[ ظˆط¶ط¹غŒطھ ]")
 
         Panel {
-            Title("حالت کار")
-            Body("✔ اسکن دستی + بررسی سبک پس‌زمینه (WorkManager؛ با محدودیت‌های اندروید).")
-            Body("✔ تحلیل‌ها روی دستگاه انجام می‌شوند؛ برنامه داده‌ای برای سرور ارسال نمی‌کند.")
-            Body(if (FileSweep.hasAccess(ctx)) "✔ دسترسی به فایل‌ها داده شده (اسکن سنگین آماده است)" else "✖ دسترسی به فایل‌ها داده نشده (برای اسکن سنگین لازم است)", if (FileSweep.hasAccess(ctx)) Soft else Amber)
-            Body(if (usage) "✔ پایش مصرف برنامه‌ها فعال است" else "✖ پایش مصرف: دسترسی نداده‌ای", if (usage) Soft else Amber)
-            if (!usage) OutlinedButton(onClick = { UsageMonitor.openSettings(ctx) }) { Text("فعال‌سازی Usage access") }
-            OutlinedButton(onClick = { tick++ }) { Text("به‌روزرسانی وضعیت") }
+            Title("ط­ط§ظ„طھ ع©ط§ط±")
+            Body("âœ” ط§ط³ع©ظ† ط¯ط³طھغŒ + ط¨ط±ط±ط³غŒ ط³ط¨ع© ظ¾ط³â€Œط²ظ…غŒظ†ظ‡ (WorkManagerط› ط¨ط§ ظ…ط­ط¯ظˆط¯غŒطھâ€Œظ‡ط§غŒ ط§ظ†ط¯ط±ظˆغŒط¯).")
+            Body("âœ” طھط­ظ„غŒظ„â€Œظ‡ط§ ط±ظˆغŒ ط¯ط³طھع¯ط§ظ‡ ط§ظ†ط¬ط§ظ… ظ…غŒâ€Œط´ظˆظ†ط¯ط› ط¨ط±ظ†ط§ظ…ظ‡ ط¯ط§ط¯ظ‡â€Œط§غŒ ط¨ط±ط§غŒ ط³ط±ظˆط± ط§ط±ط³ط§ظ„ ظ†ظ…غŒâ€Œع©ظ†ط¯.")
+            Body(if (FileSweep.hasAccess(ctx)) "âœ” ط¯ط³طھط±ط³غŒ ط¨ظ‡ ظپط§غŒظ„â€Œظ‡ط§ ط¯ط§ط¯ظ‡ ط´ط¯ظ‡ (ط§ط³ع©ظ† ط³ظ†ع¯غŒظ† ط¢ظ…ط§ط¯ظ‡ ط§ط³طھ)" else "âœ– ط¯ط³طھط±ط³غŒ ط¨ظ‡ ظپط§غŒظ„â€Œظ‡ط§ ط¯ط§ط¯ظ‡ ظ†ط´ط¯ظ‡ (ط¨ط±ط§غŒ ط§ط³ع©ظ† ط³ظ†ع¯غŒظ† ظ„ط§ط²ظ… ط§ط³طھ)", if (FileSweep.hasAccess(ctx)) Soft else Amber)
+            Body(if (usage) "âœ” ظ¾ط§غŒط´ ظ…طµط±ظپ ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§ ظپط¹ط§ظ„ ط§ط³طھ" else "âœ– ظ¾ط§غŒط´ ظ…طµط±ظپ: ط¯ط³طھط±ط³غŒ ظ†ط¯ط§ط¯ظ‡â€Œط§غŒ", if (usage) Soft else Amber)
+            if (!usage) OutlinedButton(onClick = { UsageMonitor.openSettings(ctx) }) { Text("ظپط¹ط§ظ„â€Œط³ط§ط²غŒ Usage access") }
+            OutlinedButton(onClick = { tick++ }) { Text("ط¨ظ‡â€Œط±ظˆط²ط±ط³ط§ظ†غŒ ظˆط¶ط¹غŒطھ") }
         }
 
         if (heavy.isNotEmpty()) {
             Panel(Amber) {
-                Title("برنامه‌های پرمصرف (۲۴ ساعت گذشته)", Amber)
-                heavy.forEach { Body("${appLabel(ctx, it.pkg)} · ${it.minutes} دقیقه در پیش‌زمینه") }
-                Dim("اندروید درصد باتری هر برنامه را نمی‌دهد؛ زمان پیش‌زمینه معیار است.")
+                Title("ط¨ط±ظ†ط§ظ…ظ‡â€Œظ‡ط§غŒ ظ¾ط±ظ…طµط±ظپ (غ²غ´ ط³ط§ط¹طھ ع¯ط°ط´طھظ‡)", Amber)
+                heavy.forEach { Body("${appLabel(ctx, it.pkg)} آ· ${it.minutes} ط¯ظ‚غŒظ‚ظ‡ ط¯ط± ظ¾غŒط´â€Œط²ظ…غŒظ†ظ‡") }
+                Dim("ط§ظ†ط¯ط±ظˆغŒط¯ ط¯ط±طµط¯ ط¨ط§طھط±غŒ ظ‡ط± ط¨ط±ظ†ط§ظ…ظ‡ ط±ط§ ظ†ظ…غŒâ€Œط¯ظ‡ط¯ط› ط²ظ…ط§ظ† ظ¾غŒط´â€Œط²ظ…غŒظ†ظ‡ ظ…ط¹غŒط§ط± ط§ط³طھ.")
             }
         }
 
         Panel {
-            Title("تاریخچه‌ی اسکن")
-            if (history.isEmpty()) Body("هنوز اسکنی انجام نشده.") else history.forEach { Body(it) }
+            Title("طھط§ط±غŒط®ع†ظ‡â€ŒغŒ ط§ط³ع©ظ†")
+            if (history.isEmpty()) Body("ظ‡ظ†ظˆط² ط§ط³ع©ظ†غŒ ط§ظ†ط¬ط§ظ… ظ†ط´ط¯ظ‡.") else history.forEach { Body(it) }
         }
 
         Panel {
-            Title("چرا گوشی می‌گوید CyberGuard خطرناک است؟")
-            Body("معمولاً هشدار اشتباه است: برنامه با کلید دیباگ ساخته شده، از پلی‌استور نیامده و مجوزهایی می‌خواهد که آنتی‌ویروس‌ها هم لازم دارند. برای استفاده‌ی شخصی «More details ← Install anyway» را بزن.")
+            Title("ع†ط±ط§ ع¯ظˆط´غŒ ظ…غŒâ€Œع¯ظˆغŒط¯ CyberGuard ط®ط·ط±ظ†ط§ع© ط§ط³طھطں")
+            Body("ظ…ط¹ظ…ظˆظ„ط§ظ‹ ظ‡ط´ط¯ط§ط± ط§ط´طھط¨ط§ظ‡ ط§ط³طھ: ط¨ط±ظ†ط§ظ…ظ‡ ط¨ط§ ع©ظ„غŒط¯ ط¯غŒط¨ط§ع¯ ط³ط§ط®طھظ‡ ط´ط¯ظ‡طŒ ط§ط² ظ¾ظ„غŒâ€Œط§ط³طھظˆط± ظ†غŒط§ظ…ط¯ظ‡ ظˆ ظ…ط¬ظˆط²ظ‡ط§غŒغŒ ظ…غŒâ€Œط®ظˆط§ظ‡ط¯ ع©ظ‡ ط¢ظ†طھغŒâ€ŒظˆغŒط±ظˆط³â€Œظ‡ط§ ظ‡ظ… ظ„ط§ط²ظ… ط¯ط§ط±ظ†ط¯. ط¨ط±ط§غŒ ط§ط³طھظپط§ط¯ظ‡â€ŒغŒ ط´ط®طµغŒ آ«More details â†گ Install anywayآ» ط±ط§ ط¨ط²ظ†.")
         }
 
         Panel {
-            Title("نادیده‌گرفته‌ها")
+            Title("ظ†ط§ط¯غŒط¯ظ‡â€Œع¯ط±ظپطھظ‡â€Œظ‡ط§")
             OutlinedButton(onClick = { Store.clearIgnored(ctx); tick++ }) {
-                Text("پاک‌کردن لیست (${Store.ignored(ctx).size})")
+                Text("ظ¾ط§ع©â€Œع©ط±ط¯ظ† ظ„غŒط³طھ (${Store.ignored(ctx).size})")
             }
         }
         Spacer(Modifier.height(12.dp))
