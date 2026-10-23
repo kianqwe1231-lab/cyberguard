@@ -4,15 +4,20 @@
 
     <!-- لیست برنامه‌های نصب‌شده (Android 11+). گوگل‌پلی برای این مجوز فرم توجیهی می‌خواهد؛ آنتی‌ویروس مورد مجاز است. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- برای حذف برنامه‌های آلوده با دیالوگ تأیید سیستم -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!-- اسکن سنگین: گشتن کل حافظه (کاربر باید دستی اجازه بدهد) -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!-- مصرف/زمان استفاده برنامه‌ها؛ کاربر باید دستی از Settings → Usage access بدهد -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
 
     <application
-        android:name=".CyberApp"
         android:allowBackup="false"
+        android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="CyberGuard"

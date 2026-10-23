@@ -34,15 +34,23 @@ data class ScanReport(
 
 /** پایگاه امضا. عمداً خالی است؛ از یک فید امضاشده/به‌روزشونده پر کن (سرور خودت، یا API هش مثل VirusTotal با کلید خودت). */
 object Signatures {
-    val hashes: MutableMap<String, String> = mutableMapOf()   // sha256(APK) -> family
+    val hashes: MutableMap<String, String> = mutableMapOf()   // sha256 -> family
     val packages: MutableMap<String, String> = mutableMapOf() // packageName -> family
 }
 
 private class Env(val a11y: Set<String>, val admins: Set<String>, val listeners: Set<String>)
 
+/**
+ * منطق تشخیص (برای جلوگیری از هشدار اشتباه روی برنامه‌های عادی مثل تلگرام):
+ *  1) امضای شناخته‌شده‌ی ویروس  → همیشه «ویروس».
+ *  2) برنامه‌ی سیستمی یا نصب‌شده از فروشگاه معتبر (پلی‌استور…) → فقط با امضا شناسایی می‌شود؛ مجوز تنها هرگز هشدار نمی‌دهد.
+ *  3) برنامه‌ی نصب‌شده از منبع ناشناس → امتیاز رفتاری: مجوزها (سقف ۵) + قابلیت‌های خطرناک
+ *     (دسترسی‌پذیری، مدیر دستگاه، خواندن اعلان‌ها، بدون آیکون) . ≥۸ مشکوک، ≥۱۴ ویروس.
+ */
 object Scanner {
     private const val THREAT_SCORE = 14
     private const val SUSPICIOUS_SCORE = 8
+    private const val PERM_CAP = 5
 
     private val RISKY: Map<String, Pair<Int, String>> = mapOf(
         "android.permission.SEND_SMS" to (3 to "می‌تواند پیامک بفرستد (هزینه‌زا / پخش بدافزار)"),
@@ -60,6 +68,16 @@ object Scanner {
         "com.android.vending", "com.sec.android.app.samsungapps",
         "com.amazon.venezia", "org.fdroid.fdroid"
     )
+
+    /** امتیاز مجوزها (با سقف) + توضیح فارسی؛ برای APKهای نصب‌نشده هم استفاده می‌شود. */
+    fun permissionScore(perms: Array<String>?): Pair<Int, List<String>> {
+        var s = 0
+        val r = ArrayList<String>()
+        perms?.forEach { perm ->
+            RISKY[perm]?.let { (w, text) -> s += w; r += text }
+        }
+        return Pair(minOf(s, PERM_CAP), r)
+    }
 
     fun scanAll(
         ctx: Context,
@@ -80,9 +98,9 @@ object Scanner {
             done++
             onProgress(done, pkgs.size, p.packageName)
             if (p.packageName == ctx.packageName || p.packageName in ignored) continue
-            val f = scanInfo(pm, p, heavy, env, includeSystem = false) ?: continue
+            val f = (try { scanInfo(pm, p, heavy, env, includeSystem = false) } catch (e: Exception) { null }) ?: continue
             if (f.level != Level.CLEAN) out += f
-            Thread.sleep(if (heavy) 15L else 40L) // سرعت نمایشی تا بشود اسکن را دید و متوقف کرد
+            Thread.sleep(if (heavy) 12L else 35L) // سرعت نمایشی تا بشود اسکن را دید و متوقف کرد
         }
         return ScanReport(out.sortedByDescending { it.score }, done, pkgs.size,
             System.currentTimeMillis() - t0, stopped, heavy)
@@ -102,14 +120,13 @@ object Scanner {
         if (system && !heavy && !includeSystem) return null
 
         val pkg = p.packageName
+        val label = pm.getApplicationLabel(ai).toString()
         val reasons = mutableListOf<String>()
-        var score = 0
         var sig = false
         var hash: String? = null
-        val label = pm.getApplicationLabel(ai).toString()
 
         Signatures.packages[pkg]?.let { reasons += "امضای ویروس شناخته‌شده: $it"; sig = true }
-        if (heavy) {
+        if (heavy && !system) {
             val h = try { sha256(File(ai.sourceDir)) } catch (e: Exception) { null }
             hash = h
             if (h != null) {
@@ -117,32 +134,34 @@ object Scanner {
             }
         }
 
-        var hasSms = false
-        p.requestedPermissions?.forEach { perm ->
-            RISKY[perm]?.let { (w, text) ->
-                score += w; reasons += text
-                if (perm.endsWith("_SMS")) hasSms = true
-            }
-        }
+        val installer = if (system) null else installer(pm, pkg)
+        val fromStore = !system && installer != null && installer in TRUSTED_INSTALLERS
+
+        // برنامه‌ی سیستمی یا فروشگاهی: فقط امضای ویروس
+        if (sig) return Finding(pkg, label, Level.THREAT, 20, reasons, system, hash)
+        if (system || fromStore) return Finding(pkg, label, Level.CLEAN, 0, reasons, system, hash)
+
+        // منبع ناشناس: امتیاز رفتاری
+        val (permScore, permReasons) = permissionScore(p.requestedPermissions)
+        var score = permScore
+        reasons += permReasons
+        val hasSms = p.requestedPermissions?.any { it.endsWith("_SMS") } == true
         val a11yOn = pkg in env.a11y
+
         if (a11yOn) { score += 4; reasons += "سرویس دسترسی‌پذیری فعال (می‌تواند صفحه را بخواند و کلیک کند)" }
         if (pkg in env.admins) { score += 4; reasons += "مدیر دستگاه فعال است (حذفش سخت می‌شود)" }
         if (pkg in env.listeners) { score += 3; reasons += "به همه‌ی اعلان‌ها دسترسی دارد (کدهای تأیید)" }
         if (hasSms && a11yOn) { score += 3; reasons += "ترکیب پیامک + دسترسی‌پذیری (الگوی تروجان بانکی)" }
-        if (ai.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) { score += 2; reasons += "نسخه‌ی دیباگ (برای برنامه‌ی منتشرشده عادی نیست)" }
-        if (!system) {
-            val inst = installer(pm, pkg)
-            if (inst == null || inst !in TRUSTED_INSTALLERS) {
-                score += 2; reasons += "نصب از منبع ناشناس (${inst ?: "نامعلوم"})"
-            }
-        }
+        if (pm.getLaunchIntentForPackage(pkg) == null) { score += 3; reasons += "آیکون ندارد و پنهان است" }
+        score += 1
+        reasons += "نصب از منبع ناشناس (${installer ?: "نامعلوم"})"
 
         val level = when {
-            sig || score >= THREAT_SCORE -> Level.THREAT
+            score >= THREAT_SCORE -> Level.THREAT
             score >= SUSPICIOUS_SCORE -> Level.SUSPICIOUS
             else -> Level.CLEAN
         }
-        return Finding(pkg, label, level, if (sig) score + 10 else score, reasons, system, hash)
+        return Finding(pkg, label, level, score, reasons, false, hash)
     }
 
     private fun buildEnv(ctx: Context): Env {
